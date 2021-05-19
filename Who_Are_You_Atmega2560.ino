@@ -15,13 +15,18 @@
 #define TXD 14
 #define RXD 15
 #define EOL "<end>"
-#define SERVER 172.30.1.24
-
+#define SERVER "172.30.1.24"
+#define SENSOR 18
+// HIGH -> 분리, LOW -> 접촉
 // requestCommand / data / <end>
+
+// 헤더 설정 어떻게하지
 enum BluetoothRequest{
   SetWiFiName,
   SetWiFiPassword,
   DisconnectWiFi,
+  SetDeviceName,
+  SetEmail,
 };
 
 SoftwareSerial bluetooth(RXD, TXD);
@@ -29,14 +34,14 @@ String request;
 String ssid = NULL;
 String password = NULL;
 bool isReadyToConnect = false;
-bool isDone = false;
 
 WiFiClient client;
 WebSocketClient webSocketClient;
 
 void setup() {
   bluetooth.begin(9600);
-  
+  attachInterrupt(SENSOR, DetachSensor, RISING);
+  attachInterrupt(SENSOR, AttachSensor, FALLING)
 }
 
 void loop() {
@@ -51,31 +56,24 @@ void loop() {
     }
   }
 
-  if(isReadyToConnect && !isDone)
+  if(isReadyToConnect)
   {
     if(TryConnectWiFi())
     {
-      isDone = ConnectToServer();
+      if(ConnectToServer())
+      {
+        isReadyToConnect = false;
+      }
     }
   }
 
-  if(isDone)
-  {
-    // 자석 작동 감지 코드
-    // SendToServer(String data);
-  }
-
-}
-void SendToServer(String data)
-{
-   webSocketClient.sendData();  
 }
 
 boolean ConnectToServer()
 {
   if(client.connect(SERVER, 8080))
   {
-    webSocketClient.handshake(clinet);
+    webSocketClient.handshake(client);
     
     return true;
   }
@@ -100,7 +98,6 @@ boolean TryConnectWiFi()
   }
 
   return true;
-  
 }
 
 void AllocData(String data)
@@ -126,4 +123,26 @@ void AllocData(String data)
 
   isReadyToConnect = (ssid != NULL) && (password != NULL);
   request = "";
+}
+
+void AttachSensor()
+{
+  
+}
+
+void DetachSensor()
+{
+  String msg = 
+  SendToServer()
+}
+
+boolean SendToServer(String data)
+{
+  if(client.connected()
+  {
+    webSocketClient.sendData(data);
+    return true;  
+  }
+  
+  return false;
 }
