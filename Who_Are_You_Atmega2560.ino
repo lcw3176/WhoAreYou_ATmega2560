@@ -12,27 +12,36 @@
 
 #include <SoftwareSerial.h>
 
-#define TXD 14
-#define RXD 15
-#define EOL "<end>"
-#define SERVER "172.30.1.24"
+#define TXD 11
+#define RXD 10
+#define startFlag "<start>"
+#define endFlag "<end>"
+#define HOST "172.30.1.12"
+#define PATH "/auth/socket"
 #define SENSOR 18
 // HIGH -> 분리, LOW -> 접촉
-// requestCommand / data / <end>
+// requestCommand / data
 
-// 헤더 설정 어떻게하지
+
 enum BluetoothRequest{
   SetWiFiName,
   SetWiFiPassword,
   DisconnectWiFi,
   SetDeviceName,
   SetEmail,
+  SetToken,
 };
 
 SoftwareSerial bluetooth(RXD, TXD);
 String request;
-String ssid = NULL;
-String password = NULL;
+
+String ssid;
+String password;
+
+String token;
+String deviceName;
+String email;
+
 bool isReadyToConnect = false;
 
 WiFiClient client;
@@ -40,42 +49,54 @@ WebSocketClient webSocketClient;
 
 void setup() {
   bluetooth.begin(9600);
+  Serial.begin(9600);
+  
   attachInterrupt(SENSOR, DetachSensor, RISING);
-  attachInterrupt(SENSOR, AttachSensor, FALLING)
+  attachInterrupt(SENSOR, AttachSensor, FALLING);
 }
 
 void loop() {
   
   if(bluetooth.available())
   {
-    request += bluetooth.read();
-   
-    if(request.endsWith(EOL))
+    request += bluetooth.readString();
+    
+    if(request.endsWith(endFlag))
     {
-      AllocData(request);
+      String data = request.substring(0, data.indexOf(startFlag));
+      AllocData(data);
     }
   }
 
-  if(isReadyToConnect)
-  {
-    if(TryConnectWiFi())
-    {
-      if(ConnectToServer())
-      {
-        isReadyToConnect = false;
-      }
-    }
-  }
+//  if(isReadyToConnect)
+//  {
+//    if(TryConnectWiFi())
+//    {
+//      if(ConnectToServer())
+//      {
+//        isReadyToConnect = false;
+//      }
+//    }
+//  }
 
 }
 
 boolean ConnectToServer()
 {
-  if(client.connect(SERVER, 8080))
+  if(client.connect(HOST, 8080))
   {
-    webSocketClient.handshake(client);
+    char* charToken = (char *)malloc(sizeof(char) * token.length());
+    token.toCharArray(charToken, token.length());
+    webSocketClient.path = PATH;
+    webSocketClient.host = HOST;
+    webSocketClient.token = charToken;
     
-    return true;
+    if(webSocketClient.handshake(client))
+    {
+      free(charToken);
+      return true;
+    }
+    
   }
 
   return false;
@@ -83,7 +104,7 @@ boolean ConnectToServer()
 
 boolean TryConnectWiFi()
 {
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid.c_str(), password.c_str());
   int timeoutCount = 0;
   
   while(WiFi.status() != WL_CONNECTED)
@@ -103,7 +124,7 @@ boolean TryConnectWiFi()
 void AllocData(String data)
 {
   int command = data.substring(0, 1).toInt();
-  String parameter = data.substring(2, data.indexOf("/", 2)); 
+  String parameter = data.substring(2, data.indexOf("/", 2));
 
   switch(command)
   {
@@ -117,11 +138,20 @@ void AllocData(String data)
       ssid = "";
       password = "";
       break;
+    case SetDeviceName:
+      deviceName = parameter;
+      break;
+    case SetEmail:
+      email = parameter;
+      break;
+    case SetToken:
+      token = parameter;
+      break;
     default:
       break;
   }
-
-  isReadyToConnect = (ssid != NULL) && (password != NULL);
+  
+  isReadyToConnect = (ssid != NULL) && (password != NULL) && (deviceName != NULL) && (email != NULL) && (token != NULL);
   request = "";
 }
 
@@ -132,13 +162,13 @@ void AttachSensor()
 
 void DetachSensor()
 {
-  String msg = 
-  SendToServer()
+//  String msg = 
+//  SendToServer()
 }
 
 boolean SendToServer(String data)
 {
-  if(client.connected()
+  if(client.connected())
   {
     webSocketClient.sendData(data);
     return true;  
