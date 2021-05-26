@@ -1,15 +1,15 @@
-#include <WiFi.h>
 #include <WebSocketClient.h>
-
+#include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
 
 #define TXD 1
 #define RXD 3
+#define startFlag "<start>"
 #define endFlag "<end>"
 #define HOST "172.30.1.12"
 #define PATH "/auth/socket"
 
-// requestCommand / data / <end>
+// <start> / requestCommand / data / <end>
 enum BluetoothRequest{
   SetWiFiName,
   SetWiFiPassword,
@@ -19,33 +19,42 @@ enum BluetoothRequest{
   SetToken,
 };
 
+
 WiFiClient wifiClient;
 WebSocketClient webSocketClient;
 SoftwareSerial wifiSerial(RXD, TXD);
 
-String ssid;
-String password;
+String ssid = "";
+String password = "";
 
-String token;
-String deviceName;
-String email;
-String request;
+String token = "";
+String deviceName = "";
+String email = "";
+String request = "";
 bool isReadyToConnect = false;
 
 void setup() {
   wifiSerial.begin(9600);
+  pinMode(0, OUTPUT); // 디버깅 포트
+  digitalWrite(0, LOW);
 }
 
 void loop() {
   
   if(wifiSerial.available())
-  {
-    char recvData = wifiSerial.read();
-    request += recvData;
+  {    
+    request += (char)wifiSerial.read();
+
+    if(request.length() > 7 && !request.startsWith(startFlag))
+    {
+      request = "";
+    }
 
     if(request.endsWith(endFlag))
     {
-      Serial.println("할당: " + request);
+      digitalWrite(0, HIGH);
+      request = request.substring(request.indexOf(startFlag), request.length());
+      request.remove(0, 8); // <start> 제거
       AllocData(request);
       request = "";
     }
@@ -53,18 +62,29 @@ void loop() {
 
   if(isReadyToConnect)
   {
-    Serial.println("커넥트 시작");
+        digitalWrite(0, LOW);
+        
     if(ConnectWiFi())
     {
+        digitalWrite(0, LOW);
+        delay(2000);
+        digitalWrite(0, HIGH);
+        delay(2000);
+        
       if(ConnectToServer())
       {
-        SendToServer(email + "," + deviceName + ",1");
-        isReadyToConnect = false;
-        return;
+        digitalWrite(0, LOW);
+        delay(1000);
+        digitalWrite(0, HIGH);
+        delay(1000);
+        digitalWrite(0, LOW);
+        delay(1000);
+        digitalWrite(0, HIGH);
+        delay(1000);
+        SendToServer(email + "," + deviceName + ",true");
       }
     }
 
-    Serial.println("failed");
     isReadyToConnect = false;
   }
 }
@@ -72,7 +92,7 @@ void loop() {
 void AllocData(String data)
 {
   int command = data.substring(0, 1).toInt();
-  String parameter = data.substring(2, data.indexOf("/", 2));
+  String parameter = data.substring(2, data.indexOf(endFlag) - 1);
 
   switch(command)
   {
@@ -94,12 +114,12 @@ void AllocData(String data)
       break;
     case SetToken:
       token = parameter;
+      isReadyToConnect = true;
       break;
     default:
       break;
   }
   
-  isReadyToConnect = (ssid != NULL) && (password != NULL) && (deviceName != NULL) && (email != NULL) && (token != NULL);
 }
 
 
@@ -107,19 +127,17 @@ boolean ConnectToServer()
 {
   if(wifiClient.connect(HOST, 8080))
   {
-    char* charToken = (char *)malloc(sizeof(char) * token.length());
-    token.toCharArray(charToken, token.length());
+    char charToken[150];
+    strcpy(charToken, token.c_str());
     webSocketClient.path = PATH;
     webSocketClient.host = HOST;
     webSocketClient.token = charToken;
     
     if(webSocketClient.handshake(wifiClient))
     {
-      free(charToken);
       return true;
     }
-    
-    free(charToken);
+   
   }
 
   return false;
@@ -128,22 +146,26 @@ boolean ConnectToServer()
 
 boolean ConnectWiFi()
 {
-  Serial.println("와이파이 비긴");
-  WiFi.begin(const_cast<char*>(ssid.c_str()),const_cast<char*>(password.c_str()));
-  int timeoutCount = 0;
-  
-  while(WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    timeoutCount += 1;
-    Serial.println("연결 대기중");
-    if(timeoutCount >= 10)
-    {
-      return false;
-    }
-  }
+  char id[64]; 
+  char pw[64]; 
+  strcpy(id, ssid.c_str());
+  strcpy(pw, password.c_str());
 
-  Serial.println("연결 성공");
+  WiFi.begin(id, pw);
+  bool st = true;
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    if(st){
+      digitalWrite(0, LOW);
+    }
+
+    else{
+       digitalWrite(0, HIGH);
+    }
+
+    st = !st;
+  }
 
   return true;
 }
