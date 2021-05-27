@@ -6,6 +6,11 @@
 * C++, Sketch
 * Websocket, SoftwareSerial
 
+### 사용부품
+* ESP8266 ESP-01 와이파이 모듈
+* HC-06 블루투스 센서
+* MC-38 마그네틱 센서
+
 ### 참고 회로도
 ![회로](https://user-images.githubusercontent.com/59993347/119628243-e2aee400-be47-11eb-9224-3b6e06e33225.png)
 * 출처: https://rasino.tistory.com/299, 라즈이노 IOT
