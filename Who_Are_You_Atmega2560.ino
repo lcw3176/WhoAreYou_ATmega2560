@@ -54,13 +54,15 @@ void loop() {
   }
 
 }
+int state;
 
 void SensorEvent()
 {
-  int state = digitalRead(SENSOR);
+  int temp = digitalRead(SENSOR);
   delay(500);
-  if(state == digitalRead(SENSOR))
+  if(state != temp)
   {
+    state = temp;
     delay(500);
     if(state == HIGH)
     {
