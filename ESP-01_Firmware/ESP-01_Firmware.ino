@@ -206,8 +206,8 @@ bool ConnectWiFi()
 bool SendToServer(String state)
 {
   // state
-  // true -> 분리됨
-  // false -> 접촉됨
+  // true -> 닫힘
+  // false -> 열림
 
   if(wifiClient.connected())
   {
