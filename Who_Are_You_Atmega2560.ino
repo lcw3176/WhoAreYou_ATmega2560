@@ -28,11 +28,11 @@ enum RequestCommand{
 };
 
 void setup() {
+  Serial.begin(9600);
   bluetoothSerial.begin(9600);
   wifiSerial.begin(9600);
-  Serial.begin(9600);
-  attachInterrupt(SENSOR, DetachSensor, RISING);
-  attachInterrupt(SENSOR, AttachSensor, FALLING);
+  pinMode(SENSOR, INPUT_PULLUP);
+  attachInterrupt(5, SensorEvent, CHANGE);
 }
 
 void loop() {
@@ -46,8 +46,8 @@ void loop() {
     {
       request = request.substring(request.indexOf(startFlag), request.length());
       request.remove(0, 8); // <start> 제거
+
       Serial.println(request);
-      
       wifiSerial.write(request.c_str());
       request = "";
     }
@@ -55,14 +55,28 @@ void loop() {
 
 }
 
-// 센서 접촉됬을 때
-void AttachSensor()
+void SensorEvent()
 {
+  int state = digitalRead(SENSOR);
+  delay(500);
+  if(state == digitalRead(SENSOR))
+  {
+    delay(500);
+    if(state == HIGH)
+    {
+      Serial.println("분리");
+      String params = "6/false/<end>";
+      wifiSerial.write(params.c_str());
+    }
   
-}
-
-// 센서 분리됬을 때
-void DetachSensor()
-{
-
+    else
+    {
+      Serial.println("접촉");
+      String params = "6/true/<end>";
+      wifiSerial.write(params.c_str());
+    }
+  
+  }
+  
+  
 }
