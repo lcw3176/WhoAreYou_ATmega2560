@@ -42,7 +42,7 @@ String request;
 bool isReadyToConnect;
 
 void setup() {
-  Init();
+  InitData();
   wifiSerial.begin(9600);
   pinMode(2, OUTPUT);
   digitalWrite(2, LOW);
@@ -80,23 +80,24 @@ void TryConnectServer()
     if(ConnectToServer())
     {
       digitalWrite(2, LOW);
+      SendToServer("create");
       isReadyToConnect = false;
     }
 
     else
     {
-      Init();  
+      InitData();  
     }
   }
 
   else
   {
-    Init(); 
+    InitData(); 
   }
   
   
 }
-void Init()
+void InitData()
 {
   ssid = "";
   password = "";
@@ -151,7 +152,7 @@ bool ConnectToServer()
   {
     delay(300);
     char* charToken = (char*)malloc(sizeof(char) * token.length());
-//    char charToken[150];
+
     strcpy(charToken, token.c_str());
     webSocketClient.path = PATH;
     webSocketClient.host = HOST;
@@ -176,8 +177,6 @@ bool ConnectWiFi()
   char* charId = (char*)malloc(sizeof(char) * ssid.length()); 
   char* charPw = (char*)malloc(sizeof(char) * password.length()); 
 
-//  char charId[30];
-//  char charPw[30];
   strcpy(charId, ssid.c_str());
   strcpy(charPw, password.c_str());
 
@@ -192,6 +191,8 @@ bool ConnectWiFi()
     st = !st;
     if(count >= 30)
     {
+      free(charId);
+      free(charPw);
       return false;
     }
   }
