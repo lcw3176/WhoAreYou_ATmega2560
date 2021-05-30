@@ -29,25 +29,21 @@ WiFiClient wifiClient;
 WebSocketClient webSocketClient;
 SoftwareSerial wifiSerial(RXD, TXD);
 
-Thread serialThread = Thread();
 Thread connectionThread = Thread();
 
-String ssid;
-String password;
-
-String token;
-String deviceName;
-String email;
-String request;
-bool isReadyToConnect;
+String ssid = "";
+String password = "";
+String request = "";
+String token = "";
+String deviceName = "";
+String email = "";
+bool isReadyToConnect = false;
 
 void setup() {
-  InitData();
   wifiSerial.begin(9600);
   pinMode(2, OUTPUT);
   digitalWrite(2, LOW);
   
-  serialThread.onRun(AllocData);
   connectionThread.onRun(TryConnectServer);
 }
 
@@ -57,12 +53,18 @@ void loop() {
   {    
     digitalWrite(2, HIGH);
     request += (char)wifiSerial.read();
-        
+
     if(request.endsWith(endFlag))
     {
-      serialThread.run();
+      request = request.substring(request.indexOf(startFlag), request.length());
+      request.remove(0, 8); // <start> 제거
+      int command = request.substring(0, 1).toInt();
+      String parameter = request.substring(2, request.indexOf(endFlag) - 1); // <end> 제거
+      AllocData(command, parameter);
+      
+      request = "";  
     }
-    
+
   }
 
   if(isReadyToConnect)
@@ -81,38 +83,15 @@ void TryConnectServer()
     {
       digitalWrite(2, LOW);
       SendToServer("create");
-      isReadyToConnect = false;
     }
 
-    else
-    {
-      InitData();  
-    }
   }
 
-  else
-  {
-    InitData(); 
-  }
-  
-  
-}
-void InitData()
-{
-  ssid = "";
-  password = "";
-  token = "";
-  deviceName = "";
-  email = "";
-  request = "";
   isReadyToConnect = false;
 }
 
-void AllocData()
+void AllocData(int command, String parameter)
 {
-  int command = request.substring(0, 1).toInt();
-  String parameter = request.substring(2, request.indexOf(endFlag) - 1);
-
   switch(command)
   {
     case SetWiFiName:
@@ -142,7 +121,6 @@ void AllocData()
       break;
   }
 
-   request = "";
 }
 
 

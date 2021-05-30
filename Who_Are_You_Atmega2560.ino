@@ -1,4 +1,5 @@
 #include <SoftwareSerial.h>
+#include <util/delay.h>
 
 #define BLERXD 10
 #define BLETXD 11
@@ -45,8 +46,6 @@ void loop() {
     if(request.endsWith(endFlag))
     {
       request = request.substring(request.indexOf(startFlag), request.length());
-      request.remove(0, 8); // <start> 제거
-
       Serial.println(request);
       wifiSerial.write(request.c_str());
       request = "";
@@ -54,27 +53,29 @@ void loop() {
   }
 
 }
-int state;
+
+volatile int state = 0;
 
 void SensorEvent()
 {
+  _delay_ms(500);
   int temp = digitalRead(SENSOR);
-  delay(500);
+  _delay_ms(500);
+  
   if(state != temp)
   {
     state = temp;
-    delay(500);
     if(state == HIGH)
     {
       Serial.println("분리");
-      String params = "6/false/<end>";
+      String params = "<start>/6/false/<end>";
       wifiSerial.write(params.c_str());
     }
   
     else
     {
       Serial.println("접촉");
-      String params = "6/true/<end>";
+      String params = "<start>/6/true/<end>";
       wifiSerial.write(params.c_str());
     }
   
