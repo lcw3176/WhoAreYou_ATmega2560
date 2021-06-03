@@ -18,15 +18,15 @@ String request;
 
 // 데이터 전달 형식: <start> / requestCommand / data / <end>
 // Ex: <start>/0/KT_2G_GIGA_WIFI/<end>
-enum RequestCommand{
-  SetWiFiName,
-  SetWiFiPassword,
-  DisconnectWiFi,
-  SetDeviceName,
-  SetEmail,
-  SetToken,
-  SensorChanged,
-};
+//enum RequestCommand{
+//  SetWiFiName,
+//  SetWiFiPassword,
+//  DisconnectWiFi,
+//  SetDeviceName,
+//  SetEmail,
+//  SetToken,
+//  SensorChanged,
+//};
 
 void setup() {
   Serial.begin(9600);
