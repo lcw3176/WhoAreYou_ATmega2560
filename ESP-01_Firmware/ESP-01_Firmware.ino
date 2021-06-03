@@ -8,7 +8,7 @@
 #define RXD 3
 #define startFlag "<start>"
 #define endFlag "<end>"
-#define HOST "172.30.1.42"
+#define HOST "172.30.1.2"
 #define PATH "/auth/socket"
 
 
