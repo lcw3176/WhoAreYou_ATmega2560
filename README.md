@@ -15,6 +15,10 @@
 ![회로](https://user-images.githubusercontent.com/59993347/119628243-e2aee400-be47-11eb-9224-3b6e06e33225.png)
 * 출처: https://rasino.tistory.com/299, 라즈이노 IOT
 
+### 실제 구성 사진
+![KakaoTalk_20210603_101827784](https://user-images.githubusercontent.com/59993347/120571497-38414d00-c455-11eb-8dea-7bc68f705fae.jpg)
+* 작동 모습: https://www.youtube.com/watch?v=a5a6oeBi8YY
+---
 ### 기록사항
 #### ESP-01 와이파이 모듈
 - 21.05.27
